@@ -1,0 +1,32 @@
+services:
+  db:
+    # Official PostgreSQL image pre-configured with pgvector
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: rag_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: rag_streamlit
+    restart: always
+    ports:
+      - "8501:8501"
+    environment:
+      # Passes the API key and DB connection string at runtime
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://admin:securepassword@db:5432/rag_db
+    depends_on:
+      - db
+    volumes:
+      - .:/app # Syncs your local code to the container for live-reloading during dev
+
+volumes:
+  postgres_data:
